@@ -1,0 +1,139 @@
+.root{
+    -fx-base: #333;
+    -fx-base-dark: #282828;
+}
+
+#custom-window {
+ -fx-background-color: -fx-base;
+ -fx-border-width: 1;
+ -fx-border-color: -fx-base-dark;
+}
+
+#custom-window #topbar{
+  -fx-padding: 1 1 1 0;
+  -fx-background-color: transparent;
+}
+
+#custom-window #topbar MenuBar {
+ -fx-padding: 0 0 0 0;
+}
+
+#custom-window #topbar Menu {
+ -fx-padding: 0 0 0 0;
+}
+
+#custom-window #topbar Label{
+  -fx-padding: 0 0 2 5;
+}
+
+#custom-window #topbar #exit-button {
+  -fx-background-color: transparent;
+  -fx-padding: 0 0 0 0;
+  -fx-pref-width: 20;
+  -fx-pref-height: 20;
+}
+
+#custom-window #bottombar{
+  -fx-background-color: -fx-base-dark;
+  -fx-background-radius: 0 0 15 0;
+}
+
+#custom-window #bottombar Label:hover  {
+  -fx-cursor: se_resize;
+}
+
+#custom-window .sidebar {
+  -fx-background-color: -fx-base-dark;
+  -fx-min-width: 2;
+  -fx-max-width: 2;
+}
+
+#custom-window .sidebar:hover {
+  -fx-cursor: h_resize;
+}
+
+#main-view {
+    -fx-background-color: yellow;
+    -fx-padding: 10 5 10 5;
+    -fx-spacing: 10;
+
+}
+
+#css-test-hbox {
+    -fx-background-color: black;
+    -fx-spacing: 10;
+    -fx-padding: 10;
+    -fx-border-radius: 10;
+    -fx-alignment: center-left;
+}
+
+.root-pane {
+    -fx-background-color: red;
+}
+
+.text-field {
+    -fx-border-color: black;
+    -fx-border-radius: 3;
+    -fx-background-color: #AAA;
+}
+
+.text-field:focused {
+    -fx-border-color: #66D;
+
+}
+
+.label {
+    -fx-alignment: bottom-center;
+    -fx-font-size: 15 px;
+   // -fx-background-color: green;
+}
+
+.button {
+    -fx-background-color: blue;
+    -fx-font-size: 15;
+}
+
+.textArea {
+    -fx-text-fill: red;
+}
+
+.settings-group{
+    -fx-spacing: 5;
+    -fx-padding: 10;
+}
+
+.settings-row{
+    -fx-spacing: 5;
+    -fx-background-color: transparent;
+}
+
+.settings-row .label {
+    -fx-font-size: 15;
+    -fx-alignment: center-left;
+    -fx-background-color: transparent;
+}
+
+#Settings-pane {
+    -fx-background-color: #666;
+    -fx-padding: 3;
+}
+
+#Settings-pane .treeview {
+    -fx-background-color: #666
+}
+
+#settings-container {
+    -fx-background-color: #777;
+
+}
+
+#css-style-list .hbox .label,
+#css-style-list .label {
+    -fx-background-color: transparent;
+}
+
+.stylechecker-selected{
+    -fx-border-color:red;
+     -fx-border-style:solid;
+     -fx-border-width: 1;
+}
