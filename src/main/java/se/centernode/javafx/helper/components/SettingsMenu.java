@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import javafx.collections.ListChangeListener;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.MultipleSelectionModel;
@@ -21,28 +22,32 @@ public class SettingsMenu {
   protected Controller controller;
   protected Config config;
   
-  Map<String, Pane> setingsContent;
-  Pane settingsList;
-  Pane treeView;
-  Pane settingsPane;
+  Map<String, Pane> settingsViews;
+  Pane settingsFullView;
+  Pane settingsMenu;
+  Pane settingsDisplay;
+  private Map<String, TreeItem<String>> settings;
 
   public SettingsMenu(Controller controller) {
     this.controller = controller;
     this.config = controller.getConfig();
-
-    setingsContent = new HashMap<>();
-    settingsList = new VBox();
-    settingsList.setId("settings-container");
-    settingsList.setMinWidth(200);
-    HBox.setHgrow(settingsList, Priority.ALWAYS);
-    treeView = new VBox(createTreeView());
-    settingsPane = new HBox();
-    settingsPane.setId("Settings-pane");
-    settingsPane.getChildren().addAll(treeView, settingsList);
+    settingsViews = new HashMap<>();
+    settings = new TreeMap<>();
+    
+    settingsDisplay = new VBox();
+    settingsDisplay.setId("settings-container");
+    settingsDisplay.setMinWidth(200);
+    HBox.setHgrow(settingsDisplay, Priority.ALWAYS);
+    
+    settingsMenu = createMenu(config);
+    
+    settingsFullView = new HBox();
+    settingsFullView.setId("Settings-pane");
+    settingsFullView.getChildren().addAll(settingsMenu, settingsDisplay);
   }
 
   public Pane getSettings() {
-    return settingsPane;
+    return settingsFullView;
   }
 
   public void showSettingsDialog(Stage primaryStage) {
@@ -51,7 +56,7 @@ public class SettingsMenu {
     stage.initOwner(primaryStage);
     
     CustomWindow window = new CustomWindow(stage, controller, "settings");
-    window.setContent(settingsPane);
+    window.setContent(settingsFullView);
     
     Scene scene = window.getScene();
     stage.setScene(scene);
@@ -71,141 +76,122 @@ public class SettingsMenu {
     });
   }
 
-  
-  
-  private TreeView<String> createTreeView() {
-    
-    Map<String, TreeItem<String>> settings = new TreeMap<>();
-    
-    
-    
-    TreeItem<String> currentItem;
+  private Pane createMenu(Config config) {
+    VBox view = new VBox();
     for (Object key : config.getPorpKeys()) {
-      String s = key.toString();
-      String[] split = s.split("\\.");
-      String menuRoot = split[0];
-      if(!settings.containsKey(menuRoot)) {
-        settings.put(menuRoot, new TreeItem<String>(menuRoot));
-      } 
-      currentItem = settings.get(menuRoot);
-      
-      
-      int i = 1;
-      String tempKey = "";
-      for (String part : split) {
-        TreeItem<String> childWithName = getChildWithName(currentItem, part);
-        if (childWithName == null) {
-          if (i == split.length) {
-            final String keyToPane = tempKey;
-            addToPane(keyToPane, part);
-          } else {
-            TreeItem<String> newTI = new TreeItem<>(part);
-            currentItem.getChildren().add(newTI);
-            currentItem = newTI;
-          }
-        } else {
-          currentItem = childWithName;
-        }
-        if (!tempKey.isEmpty()) {
-          tempKey = tempKey.concat(".");
-        }
-        tempKey = tempKey.concat(part);
-        i++;
+      String keyString = key.toString();
+      String menuRoot = getKeyRoot(keyString);
+      // Add new root menu if first time
+      if (!settings.containsKey(menuRoot)) {
+        view.getChildren().add(createTreeView(menuRoot));
       }
+      addMissingMenuBranch(keyString);
+      addToSettingsView(keyString);
     }
-
+    return view;
+  }
+  
+  private TreeView<String> createTreeView(String name){
+    System.out.println("New menu root: " + name);
+    TreeItem<String> root = new TreeItem<String>(name);
+    settings.put(name, root);
     TreeView<String> tv = new TreeView<>(root);
-    root.setExpanded(true);
-    tv.setPrefWidth(200);
     tv.setOnMouseClicked((event) -> {
-      MultipleSelectionModel<TreeItem<String>> selectionModel = tv.getSelectionModel();
-      TreeItem<String> selectedItem = selectionModel.getSelectedItem();
-      System.out.println(selectedItem);
-      if (selectedItem == null) {
-        System.out.println("No item Selected");
-        return;
-      }
-
-      String key = selectedItem.getValue();
-      TreeItem<String> parent = selectedItem.getParent();
-      while (parent != null) {
-        String parentName = parent.getValue();
-        parent = parent.getParent();
-        if (parent != null) {
-          key = parentName.concat("." + key);
-        }
-      }
-      settingsList.getChildren().clear();
-      Pane pane = setingsContent.get(key);
-      if (pane != null) {
-        settingsList.getChildren().add(pane);
-      }
+      actionSelectTreeRoot(tv);
     });
     tv.setMinWidth(100);
     tv.setPrefWidth(130);
     tv.setPrefHeight(200);
     return tv;
   }
-  
-  private Map<String, TreeItem<String>> poppulateSettings(){
-    Map<String, TreeItem<String>> settings = new TreeMap<>();
-    
-    TreeItem<String> currentItem;
-    for(Object key : config.getSortedPropertyKeys()) {
-      String s = key.toString();
-      String[] part = s.split("\\.");
-      String menuRoot = part[0];
-      
-      if(!settings.containsKey(menuRoot)) {
-        settings.put(menuRoot, new TreeItem<String>(menuRoot));
-      } 
-      currentItem = settings.get(menuRoot);
-      
-      TreeItem<String> childWithName;
-      for(int index = 1; index < part.length; index++) {
-        childWithName = getChildWithName(currentItem, part[index]);
-        if(childWithName != null ) {
-          
-        }
+
+  private void actionSelectTreeRoot(TreeView<String> tv) {
+    MultipleSelectionModel<TreeItem<String>> selectionModel = tv.getSelectionModel();
+    TreeItem<String> selectedItem = selectionModel.getSelectedItem();
+    System.out.println(selectedItem);
+    if (selectedItem == null) {
+      System.out.println("No item Selected");
+      return;
+    }
+
+    String key = selectedItem.getValue();
+    TreeItem<String> parent = selectedItem.getParent();
+    while (parent != null) {
+      String parentName = parent.getValue();
+      parent = parent.getParent();
+      if (parent != null) {
+        key = parentName.concat("." + key);
       }
     }
-    return settings;
+    settingsDisplay.getChildren().clear();
+    Pane pane = settingsViews.get(key);
+    if (pane != null) {
+      settingsDisplay.getChildren().add(pane);
+    }
+  }
+  
+  private void addMissingMenuBranch(String key) {
+    // Add new menu items
+    String[] keySplit = splitKey(key);
+    String currentKeyEntry = keySplit[0];
+    String menyName = "";
+    for (int i = 1; i < keySplit.length-1; i++) {
+      menyName = keySplit[i];
+      currentKeyEntry += "." + menyName;
+      if (settings.containsKey(currentKeyEntry)) {
+        continue;
+      }
+      TreeItem<String> newEntry = new TreeItem<>(menyName);
+      System.out.println("Add missing menu: " + currentKeyEntry);
+      settings.put(currentKeyEntry, newEntry);
+      settings.get(getKeyParent(currentKeyEntry)).getChildren().add(newEntry);
+    }
   }
 
-  private void addToPane(final String propertyKey, String name) {
-    String fullKey = propertyKey + "." + name;
-
+  String[] splitKey(String key) {
+    return key.split("\\.");
+  }
+  
+  String getKeyRoot(String key) {
+    return splitKey(key)[0];
+  }
+  
+  String getKeyLeaf(String key) {
+    String[] keySplit = splitKey(key);
+    return keySplit[keySplit.length-1];
+  }
+  
+  String getKeyParent(String key) {
+    int leafLength = getKeyLeaf(key).length();
+    return key.substring(0, key.length() - leafLength - 2);
+  }
+  
+  
+  private void addToSettingsView(String key) {
+    String parentKey = getKeyParent(key);
+    String leaf = getKeyLeaf(key);
+    // Add settings field
+    System.out.println("Full key: " + key);
     Pane hBox = new HBox();
     hBox.getStyleClass().add("settings-row");
     
-    Label text = new Label(name);
+    Label text = new Label(leaf);
     text.setPrefWidth(100);
     TextField textField = new TextField();
-    textField.setText((String) config.getProp().get(fullKey));
+    textField.setText((String) config.getProp().get(key));
     textField.textProperty().addListener((obj, oldVal, newVal) -> {
-      config.getProp().setProperty(fullKey, newVal);
+      config.getProp().setProperty(key, newVal);
     });
 
     hBox.getChildren().addAll(text, textField);
     
-    if (setingsContent.containsKey(propertyKey)) {
-      setingsContent.get(propertyKey).getChildren().add(hBox);
-    } else {
+    if (!settingsViews.containsKey(parentKey)) {
+      System.out.println("Create new settings view: " + parentKey );
       VBox vBox = new VBox();
       vBox.getStyleClass().add("settings-group");
-      vBox.getChildren().add(hBox);
-      setingsContent.put(propertyKey, vBox);
-
+      settingsViews.put(parentKey, vBox);
     }
 
-  }
-
-  private TreeItem<String> getChildWithName(TreeItem<String> ti, String name) {
-    for (TreeItem<String> child : ti.getChildren()) {
-      if (child.getValue().equals(name)) {
-        return child;
-      }
-    }
-    return null;
+    settingsViews.get(parentKey).getChildren().add(hBox);
   }
 }
