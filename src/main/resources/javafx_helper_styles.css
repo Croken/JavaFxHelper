@@ -1,6 +1,7 @@
 .root{
-    -fx-base: #333;
-    -fx-base-dark: #282828;
+  -fx-base: #333;
+  -fx-base-dark: #282828;
+  -fx-base-light: #383838;
 }
 
 #custom-window {
@@ -33,9 +34,17 @@
   -fx-pref-height: 20;
 }
 
-#custom-window #bottombar{
+#custom-window #bottombar {
   -fx-background-color: -fx-base-dark;
   -fx-background-radius: 0 0 15 0;
+  -fx-padding: 2 0 2 5;
+}
+
+#custom-window #bottombar .button-container {
+  -fx-padding: 3 0 3 5;
+  -fx-spacing: 7;
+  //-fx-border-width: 1;
+  //-fx-border-color: red;
 }
 
 #custom-window #bottombar Label:hover  {
@@ -85,46 +94,24 @@
 .label {
     -fx-alignment: bottom-center;
     -fx-font-size: 15 px;
-   // -fx-background-color: green;
+    -fx-text-fill: white;
 }
 
 .button {
-    -fx-background-color: blue;
+    -fx-background-color: -fx-base-dark;
+    -fx-border-color: white;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
     -fx-font-size: 15;
+    -fx-padding: 1 5 1 5;
+}
+
+#exit-button {
+-fx-border-width: 0;
 }
 
 .textArea {
     -fx-text-fill: red;
-}
-
-.settings-group{
-    -fx-spacing: 5;
-    -fx-padding: 10;
-}
-
-.settings-row{
-    -fx-spacing: 5;
-    -fx-background-color: transparent;
-}
-
-.settings-row .label {
-    -fx-font-size: 15;
-    -fx-alignment: center-left;
-    -fx-background-color: transparent;
-}
-
-#Settings-pane {
-    -fx-background-color: #666;
-    -fx-padding: 3;
-}
-
-#Settings-pane .treeview {
-    -fx-background-color: #666
-}
-
-#settings-container {
-    -fx-background-color: #777;
-
 }
 
 #css-style-list .hbox .label,
@@ -134,6 +121,47 @@
 
 .stylechecker-selected{
     -fx-border-color:red;
-     -fx-border-style:solid;
-     -fx-border-width: 1;
+    -fx-border-style:solid;
+    -fx-border-width: 1;
 }
+
+
+
+
+<!-- Properties Menu -->
+#properties-display-window {
+-fx-background-color: #666;
+    -fx-padding: 3;
+}
+
+.button-container {}
+.button-container button .primary{}
+
+#properties-display {
+    -fx-font-size: 15;
+    -fx-background-color: #777;
+}
+#properties-display .property-group {
+    -fx-spacing: 5;
+    -fx-padding: 10;
+}
+#properties-display .property-row {
+    -fx-spacing: 5;
+    -fx-background-color: transparent;
+}
+#properties-display .property-row .name {
+    -fx-alignment: center-left;
+    -fx-background-color: transparent;
+}
+#properties-display .property-row .value-field {
+  -fx-padding: 0 5 0 5;
+}
+
+#properties-menu {
+  -fx-pref-width: 150;
+  -fx-min-width: 100;
+}
+
+
+
+

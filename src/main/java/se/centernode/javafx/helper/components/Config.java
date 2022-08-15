@@ -11,17 +11,21 @@ import java.util.Properties;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import javafx.beans.property.SimpleLongProperty;
 
 public class Config {
   public final Logger log;
+  public final static String DEVIDER = ".";
   private final String CONFIG_FILE = "/config.properties";
+  
   Properties prop;
+  private SimpleLongProperty lastSaveTime;
 
   public Config() {
     log = LogManager.getLogger(this);
     prop = new Properties();
     loadConfig();
-    printProperties();
+    lastSaveTime = new SimpleLongProperty();
   }
 
   public Set<Object> getPorpKeys() {
@@ -30,6 +34,10 @@ public class Config {
 
   public Properties getProp() {
     return prop;
+  }
+  
+  public SimpleLongProperty getLastSaveTimeProperty() {
+    return lastSaveTime;
   }
 
   public double getDoubleProperty(String key, double defaultValue) {
@@ -50,7 +58,7 @@ public class Config {
   }
 
   public void setProperty(String key, Double value) {
-    setProperty(key, String.valueOf(value));
+    setProperty(key, String.valueOf(Math.ceil(value)));
   }
 
   public void setProperty(String key, String value) {
@@ -58,7 +66,8 @@ public class Config {
     saveConfig();
   }
 
-  private void loadConfig() {
+  public void loadConfig() {
+    log.info("Loading propertis from: " + CONFIG_FILE);
     InputStream input = getClass().getResourceAsStream(CONFIG_FILE);
     try {
       prop.load(input);
@@ -73,20 +82,24 @@ public class Config {
         }
       }
     }
+    log.debug(getFormatedPropertyString());
   }
 
   public void onClose() {
-    System.out.println("Closing");
+    log.info("Closing");
     saveConfig();
-    printProperties();
   }
 
-  private void printProperties() {
-    log.info("\n== Current Config ==");
+  private String getFormatedPropertyString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("\n== Properties ==\n");
     for (Object key : getSortedPropertyKeys()) {
-      log.info(key.toString() + ": '" + prop.getProperty(key.toString()) + "'");
+      sb.append(key.toString());
+      sb.append(": '");
+      sb.append(prop.getProperty(key.toString()));
+      sb.append("'\n");
     }
-    log.info("\n");
+    return sb.toString();
   }
 
   public Object[] getSortedPropertyKeys() {
@@ -101,6 +114,7 @@ public class Config {
     OutputStreamWriter out = null;
     try {
       File file = new File(getClass().getResource(CONFIG_FILE).toURI());
+      log.info("Saving properties to: " + file.getCanonicalPath());
       fileOut = new FileOutputStream(file);
       out = new OutputStreamWriter(fileOut);
       for (Object key : getSortedPropertyKeys()) {
@@ -120,5 +134,28 @@ public class Config {
         e.printStackTrace();
       }
     }
+    lastSaveTime.set(System.currentTimeMillis());
+    log.debug(getFormatedPropertyString());
+  }
+  
+  static String[] splitKey(String key) {
+    return key.split("\\.");
+  }
+  
+  static String getKeyRoot(String key) {
+    return splitKey(key)[0];
+  }
+  
+  static String getKeyLeaf(String key) {
+    String[] keySplit = splitKey(key);
+    return keySplit[keySplit.length-1];
+  }
+  
+  static String getKeyParent(String key) {
+    int leafLength = getKeyLeaf(key).length();
+    if (key.length() <= (leafLength )) {
+      return "";
+    }
+    return key.substring(0, key.length() - leafLength - 1);
   }
 }

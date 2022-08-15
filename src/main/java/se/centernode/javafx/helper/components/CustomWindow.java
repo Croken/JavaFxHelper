@@ -23,12 +23,12 @@ import javafx.stage.StageStyle;
 public class CustomWindow {
   protected final double DEFAULT_WIDTH = 300;
   protected final double DEFAULT_HEIGHT = 300;
-  
+
   protected final double DEFAULT_POSITION_X = 0;
   protected final double DEFAULT_POSITION_Y = 0;
-  
+
   protected StringProperty bottomBarInfo = new SimpleStringProperty();
-  
+
   private final String xPropertyKey;
   private final String yPropertyKey;
   private final String withPropertyKey;
@@ -46,6 +46,7 @@ public class CustomWindow {
   private StringProperty windowTitle;
   private Runnable onCloseAction;
   private Logger log;
+  private Pane bottomBar;
 
 
   public CustomWindow(Stage stage, Controller controller, String id) {
@@ -67,21 +68,6 @@ public class CustomWindow {
     stage.setScene(scene);
     stage.setX(config.getDoubleProperty(xPropertyKey, DEFAULT_POSITION_X));
     stage.setY(config.getDoubleProperty(yPropertyKey, DEFAULT_POSITION_Y));
-    
-    // Save properties on change
-    stage.xProperty().addListener(l -> {
-      config.setProperty(xPropertyKey, stage.getX());
-    });
-    stage.yProperty().addListener(l -> {
-      config.setProperty(yPropertyKey, stage.getY());
-    });
-
-    stage.widthProperty().addListener(l -> {
-      config.setProperty(withPropertyKey, scene.getWidth());
-    });
-    stage.heightProperty().addListener(l -> {
-      config.setProperty(heightPropertyKey, scene.getHeight());
-    });
 
     windowTitle.addListener(l -> {
       config.setProperty(titlePropertyKey, l.toString());
@@ -91,7 +77,7 @@ public class CustomWindow {
   private Scene initScene(Parent root) {
     Double width = config.getDoubleProperty(withPropertyKey, DEFAULT_WIDTH);
     Double height = config.getDoubleProperty(heightPropertyKey, DEFAULT_HEIGHT);
-    log.info("Created new window(%s). width: %s  height:%s", id, width, height);
+    log.debug(String.format("Created new window('%s'): width: %s  height: %s", id, width, height));
     return new Scene(root, width, height);
   }
 
@@ -121,19 +107,24 @@ public class CustomWindow {
     topBar.getChildren().add(menuBar);
   }
 
+  public void addToBottomPane(Node node) {
+    bottomBar.getChildren().add(bottomBar.getChildren().size() - 1, node);
+  }
+
   protected BorderPane initWindow() {
     HBox.setHgrow(content, Priority.ALWAYS);
     BorderPane window = new BorderPane();
     window.setId("custom-window");
-    topBar = getTopBar();
+    topBar = createTopBar();
     window.setTop(topBar);
-    window.setBottom(getBottomBar());
-    window.setLeft(getSidebarLeft());
-    window.setRight(getSidebarRight());
+    bottomBar = createBottomBar();
+    window.setBottom(bottomBar);
+    window.setLeft(createSidebarLeft());
+    window.setRight(createSidebarRight());
     return window;
   }
 
-  protected Node getSidebarRight() {
+  protected Node createSidebarRight() {
     HBox sideBar = new HBox();
     sideBar.getStyleClass().add("sidebar");
     sideBar.setOnMousePressed(pressEvent -> {
@@ -141,12 +132,15 @@ public class CustomWindow {
         stage.setWidth(dragEvent.getSceneX());
         bottomBarInfo.set("Width: " + dragEvent.getSceneX());
       });
-      sideBar.setOnMouseReleased(event -> bottomBarInfo.set(""));
+      sideBar.setOnMouseReleased(event -> {
+        bottomBarInfo.set("");
+        config.setProperty(withPropertyKey, scene.getWidth());
+      });
     });
     return sideBar;
   }
 
-  protected Node getSidebarLeft() {
+  protected Node createSidebarLeft() {
     HBox sideBar = new HBox();
     sideBar.getStyleClass().add("sidebar");
     sideBar.setOnMousePressed(pressEvent -> {
@@ -157,22 +151,26 @@ public class CustomWindow {
         stage.setX(dragEvent.getScreenX() - pressEvent.getX());
         bottomBarInfo.set("Width: " + newWidth);
       });
-      sideBar.setOnMouseReleased(event -> bottomBarInfo.set(""));
+      sideBar.setOnMouseReleased(event -> {
+        bottomBarInfo.set("");
+        config.setProperty(withPropertyKey, scene.getWidth());
+        config.setProperty(xPropertyKey, stage.getX());
+      });
     });
     return sideBar;
   }
 
-  protected Node getBottomBar() {
+  protected Pane createBottomBar() {
     HBox bottomBarInfoPane = new HBox();
     HBox.setHgrow(bottomBarInfoPane, Priority.ALWAYS);
+    bottomBarInfoPane.setAlignment(Pos.BOTTOM_LEFT);
     Label infoLable = new Label();
     infoLable.textProperty().bind(bottomBarInfo);
     bottomBarInfoPane.getChildren().add(infoLable);
-    
-    HBox bottomBar = new HBox();
-    bottomBar.setId("bottombar");
-    bottomBar.setAlignment(Pos.BOTTOM_RIGHT);
-    Pane resize = new Pane();
+
+    VBox resize = new VBox();
+    VBox.setVgrow(resize, Priority.ALWAYS);
+    resize.setAlignment(Pos.BOTTOM_RIGHT);
     resize.getChildren().add(new Label("  "));
     resize.setOnMousePressed(pressEvent -> {
       resize.setOnMouseDragged(dragEvent -> {
@@ -180,13 +178,21 @@ public class CustomWindow {
         stage.setHeight(dragEvent.getSceneY());
         bottomBarInfo.set(dragEvent.getSceneX() + " : " + dragEvent.getSceneY());
       });
-      resize.setOnMouseReleased(event -> bottomBarInfo.set(""));
+      resize.setOnMouseReleased(event -> {
+        bottomBarInfo.set("");
+        config.setProperty(withPropertyKey, scene.getWidth());
+        config.setProperty(heightPropertyKey, scene.getHeight());
+      });
     });
+
+    HBox bottomBar = new HBox();
+    bottomBar.setId("bottombar");
+    bottomBar.setAlignment(Pos.BOTTOM_RIGHT);
     bottomBar.getChildren().addAll(bottomBarInfoPane, resize);
     return bottomBar;
   }
 
-  protected Pane getTopBar() {
+  protected Pane createTopBar() {
     HBox top = new HBox();
     Label title = new Label(config.getProperty(titlePropertyKey, ""));
     windowTitle = title.textProperty();
@@ -197,9 +203,8 @@ public class CustomWindow {
     Button exit = new Button("X");
     exit.setId("exit-button");
     exit.setOnAction(action -> {
-      onCloseAction();
-      log.debug("Closing window: " + id);
-      stage.close();
+      close();
+      
     });
     HBox exitWrapper = new HBox();
     exitWrapper.getChildren().add(exit);
@@ -209,17 +214,21 @@ public class CustomWindow {
     top.setOnMousePressed(pressEvent -> {
       boolean isFullScreen = stage.isFullScreen();
       top.setOnMouseDragged(dragEvent -> {
-        double newX = dragEvent.getScreenX() - pressEvent.getSceneX();
+        double newX = Math.ceil(dragEvent.getScreenX() - pressEvent.getSceneX());
         if (isFullScreen) {
           stage.setFullScreen(false);
           newX = dragEvent.getScreenX() - (stage.getWidth() / 2);
         }
-        double newY = dragEvent.getScreenY() - pressEvent.getSceneY();
+        double newY = Math.ceil(dragEvent.getScreenY() - pressEvent.getSceneY());
         stage.setX(newX);
         stage.setY(newY);
         bottomBarInfo.set(newX + " : " + newY);
       });
-      top.setOnMouseReleased(event -> bottomBarInfo.set(""));
+      top.setOnMouseReleased(event -> {
+        bottomBarInfo.set("");
+        config.setProperty(xPropertyKey, stage.getX());
+        config.setProperty(yPropertyKey, stage.getY());
+      });
     });
     top.setOnMouseClicked(event -> {
       if (event.getButton().equals(MouseButton.PRIMARY) & event.getClickCount() == 2) {
@@ -235,10 +244,12 @@ public class CustomWindow {
   public void setOnCloseActoin(Runnable action) {
     this.onCloseAction = action;
   }
-
-  private void onCloseAction() {
+  
+  public void close() {
+    log.debug(String.format("Close window('%s')", id));
     if (onCloseAction != null) {
       onCloseAction.run();
     }
+    stage.close();
   }
 }

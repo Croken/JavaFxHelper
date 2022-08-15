@@ -21,22 +21,19 @@ public class GUI {
   VBox root;
   Controller controller;
   Stage stage;
-
-
+  private CustomWindow window;
 
   public GUI(Controller controller, Stage primaryStage) {
     this.controller = controller;
     this.stage = primaryStage;
     
-    CustomWindow customWindow = new CustomWindow(stage, controller, "main");
-    customWindow.setContent(getMainView());
+    window = new CustomWindow(stage, controller, "main");
+    window.setContent(getMainView());
     
     myMenuBar = new CustomMenuBar(controller);
-    customWindow.addMenuBar(myMenuBar.createMenuBar());
-//    customWindow.setBeforeCloseAction(() -> controller.close());
-    scene = customWindow.getScene();
+    window.addMenuBar(myMenuBar.createMenuBar());
+    scene = window.getScene();
   }
-
 
   public Node getMainView() {
     VBox main = new VBox();
@@ -67,5 +64,9 @@ public class GUI {
 
   public Controller getController() {
     return controller;
+  }
+  
+  public void close() {
+    window.close();
   }
 }

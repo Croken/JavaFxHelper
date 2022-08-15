@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public abstract class Controller {
@@ -14,16 +15,16 @@ public abstract class Controller {
   protected Config config;
   protected Stage primaryStage;
   protected Scene scene;
-  protected SettingsMenu settingsMenu;
+  protected PropetiesMenu settingsMenu;
 
-  private Logger log;
+  protected Logger log;
 
   public Controller(Stage primaryStage) {
     this.primaryStage = primaryStage;
     log = LogManager.getLogger(this);
 
     config = new Config();
-    settingsMenu = new SettingsMenu(this);
+    settingsMenu = new PropetiesMenu(this);
     scene = createScene();
   }
 
@@ -37,8 +38,12 @@ public abstract class Controller {
     return config;
   }
 
+  public PropetiesMenu getSettingsMenu() { 
+    return settingsMenu;
+  }
+  
   public void showSettingsDialog() {
-    settingsMenu.showSettingsDialog(primaryStage);
+    settingsMenu.showSettingsDialog(primaryStage, Modality.WINDOW_MODAL);
   }
 
   public abstract Scene createScene();
@@ -46,6 +51,7 @@ public abstract class Controller {
   public void close() {
     config.onClose();
     primaryStage.close();
+    log.info("Closed");
   }
 
   public void reloadAllCss() {
@@ -73,7 +79,7 @@ public abstract class Controller {
 
 
     for (String css : stylesheets) {
-      log.info("Css file loaded: " + css);
+      log.debug("Css file loaded: " + css);
     }
   }
 

@@ -18,6 +18,12 @@ public class SampleController extends Controller {
     return gui.getScene();
   }
   
+  @Override
+  public void close() {
+    gui.close();
+    super.close();
+  }
+  
   
 
 }

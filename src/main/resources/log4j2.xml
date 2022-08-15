@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <RollingFile name="MAIN" fileName="logs/main.log"
+      filePattern="logs/main-%d{MM-dd-yyyy}.log.gz"
+      ignoreExceptions="false">
+      <PatternLayout
+        pattern="%d{HH:mm:ss.SSS} %-5level [%t] %logger{10}: %msg%n" />
+      <TimeBasedTriggeringPolicy />
+    </RollingFile>
+
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout
+        pattern="%d{HH:mm:ss.SSS} %-5level [%t] %logger{10}: %msg%n" />
+    </Console>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="se.centernode.javafx.helper.components.PropetiesMenu" level="info"/>
+    <Logger name="se.centernode.javafx.helper.components.Config" level="info"/>
+    <Logger name="se.centernode.javafx.helper.components.CustomWindow" level="trace"/>
+    <Logger name="se.centernode.javafx.helper.sample.SampleController" level="trace"/>
+
+    <Root level="trace">
+      <AppenderRef ref="Console" />
+      <AppenderRef ref="MAIN" />
+    </Root>
+  </Loggers>
+</Configuration>
